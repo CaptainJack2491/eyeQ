@@ -1,12 +1,23 @@
 import os
 import base64
 import openai
-from dotenv import load_dotenv
+import json
 import subprocess
 from datetime import datetime
 
-load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+config_dir = os.environ["HOME"] + "/.config/eyeQ/"
+print(config_dir)
+config_path = config_dir + "config.json"
+
+with open (config_path, "r") as f:
+    config = json.load(f)
+openai.api_key = config["openai_api_key"]
+
+if not openai.api_key:
+    print("Error: OpenAI API key not found")
+    subprocess.run(f"notify-send 'Error: OpenAI API key not found'", shell=True)
+subprocess.run(f"notify-send '{openai.api_key}'", shell=True)
+
 
 # Set up the screenshot path
 timestamp = datetime.now().strftime('%Y-%m-%d-%H%M%S')
@@ -40,7 +51,7 @@ def encode_image(image_path):
 
 base64_image = encode_image(screenshot_path)
 
-client = openai.OpenAI()
+client = openai.OpenAI(api_key=config["openai_api_key"])
 response = client.chat.completions.create(
     model="gpt-4o-mini",  # Replace with the correct model supporting image + text
     messages=[
